@@ -2,13 +2,38 @@
 
 A personal, accumulative knowledge base — Notion today, a knowledge graph once it earns it. The full plan is [`build_order.md`](build_order.md); the schema this guide provisions is [`data-model.md`](data-model.md). This file is everything you need to go from a blank Notion workspace to all eleven databases existing, in order.
 
-## Prerequisites
+Three parts, in order: the one thing nothing can automate, then your choice of an agent or your own hands for the rest, then the schema itself.
 
-- A Notion account (the free plan is enough — integrations don't require a paid workspace).
-- [Terraform](https://developer.hashicorp.com/terraform) >= 1.5.
-- Git.
+## 1. Mandatory manual steps
 
-## 1. Install Terraform
+Do this first, regardless of which path you take in part 2 or 3 below. Notion doesn't expose an API to create an integration or to share a page with one — the same reason there's no API to mint yourself an OAuth app on most platforms. No agent, script, or skill in this repo can do these two things for you.
+
+1. Go to [notion.so/my-integrations](https://www.notion.so/my-integrations) and click **New integration**.
+2. Name it something recognizable — `second-brain-terraform` — and associate it with your workspace.
+3. Under **Capabilities**, enable **Read content**, **Update content**, and **Insert content**. Leave the user-information capabilities off; nothing here needs them.
+4. Save, then copy the **Internal Integration Secret** it gives you. Treat it like a password — it's the credential Terraform uses to create and modify things in your Notion workspace.
+5. In Notion, create a new page — call it **Second Brain**. This becomes the parent of all eleven databases.
+6. Open that page's `···` menu → **Connections** → add the integration from step 4.
+7. Copy the page's ID: the 32-character string at the end of its URL (`notion.so/Second-Brain-<32 characters>`). With or without dashes both work.
+
+Keep the token and the page ID handy — both paths below, and the schema provisioning step, need them.
+
+## 2. Install the rest using an agent
+
+If you're working inside an AI coding tool that can run shell commands (Claude Code, Cursor, Copilot, Kiro, Codex, …), this repo ships a setup skill that does the remaining installation for you: **[`second-brain-setup`](.claude/skills/second-brain-setup/SKILL.md)**.
+
+- In Claude Code, just ask it to set up the Second Brain prerequisites, or invoke the `second-brain-setup` skill by name.
+- It installs Terraform for your OS, and registers the Notion MCP server — defaulting to the hosted, OAuth-based one, so there's no second token to manage (full per-client table in [`harnessing/mcp/README.md`](harnessing/mcp/README.md)).
+- It will stop and ask you to do part 1 above if you haven't yet, and will prompt you for the one-time browser OAuth approval when the MCP connection first activates — that click is the only human step left on this path.
+- Once it reports success, skip ahead to [part 4](#4-provision-the-schema).
+
+What an agent should actually do with this knowledge base once connected — search-before-write, how to handle contradictions, scoping, tagging — is documented once in [`harnessing/AGENT_INSTRUCTIONS.md`](harnessing/AGENT_INSTRUCTIONS.md); every tool-specific file (`CLAUDE.md`, `AGENTS.md`, `.github/copilot-instructions.md`, `.cursor/rules/`, `.kiro/steering/`) just points there.
+
+## 3. Install the rest manually, no agent
+
+Do this instead of part 2 if you'd rather run the commands yourself, or you're not working inside an agentic tool.
+
+### Install Terraform
 
 **Windows**
 ```powershell
@@ -29,20 +54,13 @@ Verify, on any OS:
 terraform -version
 ```
 
-## 2. Create a Notion integration
+You do **not** need to separately install the Notion *Terraform provider* (`delize/notion`) — `terraform init` in part 4 downloads it automatically from the public Terraform Registry the first time you run it in this repo, pinned by the committed `.terraform.lock.hcl`. There's nothing to install here beyond the Terraform CLI itself.
 
-1. Go to [notion.so/my-integrations](https://www.notion.so/my-integrations) and click **New integration**.
-2. Name it something recognizable — `second-brain-terraform` — and associate it with your workspace.
-3. Under **Capabilities**, enable **Read content**, **Update content**, and **Insert content**. Leave the user-information capabilities off; nothing here needs them.
-4. Save, then copy the **Internal Integration Secret** it gives you. Treat it like a password — it's the credential that lets Terraform create and modify things in your Notion workspace.
+### Connect the Notion MCP server (for agent use later — optional if you only want to provision the schema today)
 
-## 3. Create and share the parent page
+Terraform doesn't use MCP at all — it talks to Notion directly via `NOTION_TOKEN`. This step is only needed once you actually want an AI agent to use the knowledge base. Register the hosted server as an HTTP-transport MCP server in your client of choice; see [`harnessing/mcp/README.md`](harnessing/mcp/README.md) for the exact command or config per client (Claude Code, VS Code, Cursor, Codex, Kiro, …) and the self-hosted, token-based alternative.
 
-1. In Notion, create a new page — call it **Second Brain**. This page becomes the parent of all eleven databases; Terraform creates them underneath it.
-2. Open the page's `···` menu → **Connections** → add the integration you just created. This step can't be automated — the Notion API can't see anything you haven't explicitly shared with the integration, no matter what the token can otherwise do.
-3. Copy the page's ID: the 32-character string at the end of its URL (`notion.so/Second-Brain-<32 characters>`). With or without dashes both work.
-
-## 4. Configure this repo
+## 4. Provision the schema
 
 ```shell
 git clone https://github.com/Mirkiux/second-brain.git
@@ -50,7 +68,7 @@ cd second-brain/terraform
 cp terraform.tfvars.example terraform.tfvars
 ```
 
-Paste the page ID from step 3 into `terraform.tfvars` as `root_page_id`.
+Paste the page ID from part 1 into `terraform.tfvars` as `root_page_id`.
 
 Set the integration token as an environment variable — never put it in a `.tf` or `.tfvars` file, and `terraform.tfvars` is already gitignored so it won't get committed by accident:
 
@@ -63,10 +81,13 @@ export NOTION_TOKEN="secret_..."
 $env:NOTION_TOKEN = "secret_..."
 ```
 
-## 5. Provision the schema
-
 ```shell
 terraform init
+```
+
+This is the step that fetches the `delize/notion` provider — watch for a line like `Installing delize/notion...` in the output; that's the provider "installing" itself, automatically, with no separate action from you.
+
+```shell
 terraform validate
 terraform plan
 ```
@@ -79,7 +100,7 @@ terraform apply
 
 Type `yes` to confirm.
 
-## 6. Verify, and finish the two manual steps
+## Verify, and finish the two manual steps
 
 - Open the **Second Brain** page in Notion — you should see all 11 databases listed under it.
 - Spot-check the relations that matter most for bidirectional browsing: open a Repo entry and confirm you can see both its Projects and, from a Project entry, its Repos. If a mirror you want is missing somewhere else, `terraform/README.md` explains why and how to add it.
@@ -89,15 +110,11 @@ Type `yes` to confirm.
   terraform output -json database_ids
   ```
 
-## Connecting agents
-
-Once the schema exists, AI tools reach it through the Notion MCP server rather than raw API calls — setup per client (Claude Code, VS Code, Cursor, Codex, Kiro, …) is in [`harnessing/mcp/README.md`](harnessing/mcp/README.md), and what an agent should actually do once connected is in [`harnessing/AGENT_INSTRUCTIONS.md`](harnessing/AGENT_INSTRUCTIONS.md) — every tool-specific file (`CLAUDE.md`, `AGENTS.md`, `.github/copilot-instructions.md`, `.cursor/rules/`, `.kiro/steering/`) just points there. On a new machine, the [`second-brain-setup`](.claude/skills/second-brain-setup/SKILL.md) skill installs Terraform and the MCP server end to end, and is explicit about the one step Notion doesn't let anything automate: creating the integration and sharing the page with it.
-
 ## Troubleshooting
 
 | Symptom | Likely cause |
 |---|---|
-| `object_not_found` on apply | The parent page isn't shared with the integration — redo step 3.2. |
+| `object_not_found` on apply | The parent page isn't shared with the integration — redo part 1, steps 5–6. |
 | `unauthorized` / 401 | `NOTION_TOKEN` isn't set, is stale, or was copied with extra whitespace. |
 | Property or database "already exists" / 409 | A previous `apply` partially succeeded. Run `terraform plan` to see the actual drift before touching anything by hand. |
 | `terraform plan` wants to recreate a property after a rename | Renaming most property resources here forces replacement — see the schema notes in `terraform/README.md`. |
