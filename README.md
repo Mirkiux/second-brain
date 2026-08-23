@@ -10,11 +10,12 @@ Do this first, regardless of which path you take in part 2 or 3 below. Notion do
 
 1. Go to [notion.so/my-integrations](https://www.notion.so/my-integrations) and click **New integration**.
 2. Name it something recognizable — `second-brain-terraform` — and associate it with your workspace.
-3. Under **Capabilities**, enable **Read content**, **Update content**, and **Insert content**. Leave the user-information capabilities off; nothing here needs them.
-4. Save, then copy the **Internal Integration Secret** it gives you. Treat it like a password — it's the credential Terraform uses to create and modify things in your Notion workspace.
-5. In Notion, create a new page — call it **Second Brain**. This becomes the parent of all eleven databases.
-6. Open that page's `···` menu → **Connections** → add the integration from step 4.
-7. Copy the page's ID: the 32-character string at the end of its URL (`notion.so/Second-Brain-<32 characters>`). With or without dashes both work.
+3. Set its type to **Internal**, not Public. This is a plain static access token tied to your one workspace, not an OAuth app — no redirect URI, no client secret, no rotating token pair. Terraform can't do an interactive OAuth flow, so Internal is the only type that works here. (This is unrelated to the OAuth flow in part 2/3 below — that's a separate integration Notion runs itself for its hosted MCP server, not one you create.)
+4. Under **Capabilities**, enable **Read content**, **Update content**, and **Insert content**. Leave the user-information capabilities off; nothing here needs them.
+5. Save, then copy the **Internal Integration Secret** it gives you — that's the access token itself, ready to use as-is. Treat it like a password; it's the credential Terraform uses to create and modify things in your Notion workspace.
+6. In Notion, create a new page — call it **Second Brain**. This becomes the parent of all eleven databases.
+7. Open that page's `···` menu → **Connections** → add the integration you just created.
+8. Copy the page's ID: the 32-character string at the end of its URL (`notion.so/Second-Brain-<32 characters>`). With or without dashes both work.
 
 Keep the token and the page ID handy — both paths below, and the schema provisioning step, need them.
 
@@ -114,7 +115,7 @@ Type `yes` to confirm.
 
 | Symptom | Likely cause |
 |---|---|
-| `object_not_found` on apply | The parent page isn't shared with the integration — redo part 1, steps 5–6. |
+| `object_not_found` on apply | The parent page isn't shared with the integration — redo part 1, steps 6–7. |
 | `unauthorized` / 401 | `NOTION_TOKEN` isn't set, is stale, or was copied with extra whitespace. |
 | Property or database "already exists" / 409 | A previous `apply` partially succeeded. Run `terraform plan` to see the actual drift before touching anything by hand. |
 | `terraform plan` wants to recreate a property after a rename | Renaming most property resources here forces replacement — see the schema notes in `terraform/README.md`. |
