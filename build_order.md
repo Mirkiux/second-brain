@@ -44,7 +44,7 @@ Exposes the same API's operations as typed tools. No logic lives here that doesn
 
 ### 7. Per-tool steering docs, not a custom harness
 
-A short instructions file per environment — `CLAUDE.md`, `.cursorrules`, `copilot-instructions.md`, Kiro's steering docs — telling each agent when and how to call your tools.
+A short instructions file per environment — `CLAUDE.md`, `.cursorrules`, `copilot-instructions.md`, Kiro's steering docs — telling each agent when and how to call your tools. Done: [`harnessing/`](harnessing/) holds the one canonical instructions file plus a thin pointer per tool, and the [`second-brain-setup`](.claude/skills/second-brain-setup/SKILL.md) skill installs Terraform and the Notion MCP server across clients.
 
 > **Why this instead of building a harness:** MCP clients already give you the provider-agnostic layer. Writing per-tool instructions is a config task; a custom harness would be redundant infrastructure.
 

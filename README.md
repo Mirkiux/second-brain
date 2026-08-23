@@ -89,6 +89,10 @@ Type `yes` to confirm.
   terraform output -json database_ids
   ```
 
+## Connecting agents
+
+Once the schema exists, AI tools reach it through the Notion MCP server rather than raw API calls — setup per client (Claude Code, VS Code, Cursor, Codex, Kiro, …) is in [`harnessing/mcp/README.md`](harnessing/mcp/README.md), and what an agent should actually do once connected is in [`harnessing/AGENT_INSTRUCTIONS.md`](harnessing/AGENT_INSTRUCTIONS.md) — every tool-specific file (`CLAUDE.md`, `AGENTS.md`, `.github/copilot-instructions.md`, `.cursor/rules/`, `.kiro/steering/`) just points there. On a new machine, the [`second-brain-setup`](.claude/skills/second-brain-setup/SKILL.md) skill installs Terraform and the MCP server end to end, and is explicit about the one step Notion doesn't let anything automate: creating the integration and sharing the page with it.
+
 ## Troubleshooting
 
 | Symptom | Likely cause |
