@@ -1,15 +1,27 @@
 ---
 name: second-brain-setup
-description: Install prerequisites for the Second Brain project — Terraform and the Notion MCP server — and connect Notion. Use when setting up this repo on a new machine, when Terraform or the Notion MCP server is missing, or when asked to "set up second brain," "install second brain prerequisites," or "connect Notion MCP."
+description: Install prerequisites for the Second Brain project — Terraform and the Notion MCP server — connect Notion, and optionally provision the schema. Use when setting up this repo on a new machine, when Terraform or the Notion MCP server is missing, or when asked to "set up second brain," "install second brain prerequisites," "connect Notion MCP," or "provision the second brain schema."
 ---
 
 # Second Brain — prerequisite installer
 
 Vendor-agnostic: every step below is a plain shell command or a manual action, independent of which AI tool is running it. Detect what's missing, install or configure it, verify it, and stop and report rather than guess if a target OS/client combination has no verified path below.
 
+**Scope discipline matters here more than usual.** This skill covers three independent things — installing Terraform, connecting the Notion MCP server, and provisioning the schema. They are not a package deal. Do only what was actually asked for.
+
+## 0. Confirm scope before doing anything
+
+Ask, or infer from the request, which of these the user wants right now:
+
+- Terraform installed
+- The Notion MCP server connected
+- The schema provisioned (`terraform apply`)
+
+If the request only mentions one of these — e.g. "help me connect the MCP server via OAuth" — do only that one and stop. Don't install Terraform or run `terraform apply` as a side effect of an MCP-only request, and don't connect the MCP server as a side effect of a Terraform-only request. Mandatory manual steps (below) are only needed for whichever of the three is actually in scope.
+
 ## 1. Terraform
 
-Check first:
+Only if Terraform is in scope. Check first:
 ```shell
 terraform -version
 ```
@@ -21,26 +33,53 @@ If missing, install per OS:
 
 Re-run `terraform -version` and confirm it reports >= 1.5.
 
-## 2. Notion MCP server
+## 2. Credentials for Terraform — only if provisioning is in scope
 
-Default to the hosted OAuth server — no token to create or manage. Full per-client table: [`harnessing/mcp/README.md`](../../../harnessing/mcp/README.md). Summary:
+Skip entirely if the user only wants Terraform installed, or only wants the MCP server connected. Terraform needs an Internal/Access-token integration regardless of what path step 3 takes for MCP — walk the user through root `README.md` part 1 if they haven't done it yet (Notion doesn't expose an API for either sub-step there, so this part can't be automated further).
 
-- Detect which client is running this skill.
-- Claude Code: `claude mcp add notion --transport http https://mcp.notion.com/mcp`, then approve the browser OAuth prompt on first use.
-- Other clients (VS Code, Cursor, Codex, Kiro, …): register `https://mcp.notion.com/mcp` as an HTTP-transport MCP server through that client's own MCP config — see the table for what's verified; if the client isn't listed there, check its current MCP docs rather than guessing at flag or field names.
-- Verify with the client's own MCP list command — `notion` should show connected with its tools available.
+Once the user has the token and the page ID, have them set both as environment variables in **this terminal session** — never write either to a file:
 
-If this machine needs the self-hosted, token-based server instead (air-gapped, or read-only scoping needed) — do step 3 first, then follow the "Self-hosted" section of `harnessing/mcp/README.md`.
+```shell
+# bash / Git Bash
+export NOTION_TOKEN="..."
+export TF_VAR_root_page_id="..."
+```
+```powershell
+# PowerShell
+$env:NOTION_TOKEN = "..."
+$env:TF_VAR_root_page_id = "..."
+```
 
-## 3. Notion integration + page share
+Confirm both are actually set before moving on (e.g. check the variables are non-empty) — without ever echoing the token's value back into the terminal or a log.
 
-Needed for Terraform always; needed for the MCP server only if step 2 went the self-hosted route. Both sub-steps are manual by Notion's own design — there is no API to automate either, the same reason there's no API to mint yourself an OAuth app on most platforms:
+## 3. Notion MCP server — only if it's in scope
 
-1. Create an integration at [notion.so/my-integrations](https://www.notion.so/my-integrations) with Read/Update/Insert content capabilities, and copy its token.
-2. Share the parent Notion page with that integration from the page's `···` → **Connections** menu.
+Ask once which path: hosted OAuth (default — no token to manage) or self-hosted with the token from step 2 (only offer this if step 2 already happened). Full per-client table: [`harnessing/mcp/README.md`](../../../harnessing/mcp/README.md).
 
-Full walkthrough: root [`README.md`](../../../README.md), steps 2–3.
+**Hosted OAuth:**
+1. Run the registration command for whichever client is running this skill — e.g. in Claude Code: `claude mcp add notion --transport http https://mcp.notion.com/mcp`. For other clients, see the table; if a client isn't listed there, check its current MCP docs rather than guessing at flag or field names.
+2. That command will surface an OAuth URL or open one automatically. State it plainly and tell the user to open it and approve access.
+3. **Then actually wait.** Poll the client's own MCP status/list command every few seconds (e.g. `claude mcp list`) until `notion` shows connected, printing a short "waiting for OAuth approval in your browser…" note each time rather than going silent. Do not report success, and do not move on to anything else, until the connection shows as active — or the user explicitly says to stop waiting.
 
-## 4. Report
+**Self-hosted:** write the `NOTION_TOKEN`-based config block from `harnessing/mcp/README.md` into the client's MCP config file, using the token collected in step 2. No OAuth wait needed on this path — it's synchronous.
 
-State plainly what got installed or configured automatically, what's still pending (usually just the OAuth browser click, or the two manual steps in step 3), and point to [`terraform/README.md`](../../../terraform/README.md) for provisioning the schema next.
+## 4. Provisioning — only if explicitly asked for, and only with a plan the user has seen
+
+Only do this if the original request included provisioning, not just getting prerequisites ready.
+
+```shell
+cd terraform
+terraform init
+terraform validate
+terraform plan
+```
+
+Show the plan to the user and get explicit confirmation before running `terraform apply` — this creates real databases in their live Notion workspace, so it never runs silently as a continuation of some other request.
+
+```shell
+terraform apply
+```
+
+## 5. Report
+
+State plainly what was done, what's still pending, and — just as importantly — what was deliberately **not** touched because it was out of scope for what was actually asked.
