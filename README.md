@@ -66,21 +66,22 @@ Terraform doesn't use MCP at all — it talks to Notion directly via `NOTION_TOK
 ```shell
 git clone https://github.com/Mirkiux/second-brain.git
 cd second-brain/terraform
-cp terraform.tfvars.example terraform.tfvars
 ```
 
-Paste the page ID from part 1 into `terraform.tfvars` as `root_page_id`.
-
-Set the integration token as an environment variable — never put it in a `.tf` or `.tfvars` file, and `terraform.tfvars` is already gitignored so it won't get committed by accident:
+Set the token and the page ID from part 1 as environment variables — nothing containing either one needs to exist as a file anywhere in the repo. Terraform reads any `TF_VAR_<name>` variable automatically, so `TF_VAR_root_page_id` fills `var.root_page_id` with no `.tfvars` file involved:
 
 ```shell
 # bash / Git Bash
 export NOTION_TOKEN="secret_..."
+export TF_VAR_root_page_id="your-page-id"
 ```
 ```powershell
 # PowerShell
 $env:NOTION_TOKEN = "secret_..."
+$env:TF_VAR_root_page_id = "your-page-id"
 ```
+
+(If you'd rather keep a persistent local file instead of re-exporting each session, `cp terraform.tfvars.example terraform.tfvars` and fill it in — it's already gitignored so it can't get committed by accident. Either approach is equivalent to Terraform; the environment variables just mean no file with your real page ID ever has to exist.)
 
 ```shell
 terraform init
