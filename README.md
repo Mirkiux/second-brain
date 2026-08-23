@@ -14,7 +14,7 @@ Notion, a thin API you own, and an MCP server — working end to end in days.
 
 ### 1. Define the schema — on paper, before any tool
 
-Entity types (Note, Decision, Project, Source, Person), the relations between them, and the metadata every record carries: timestamp, provenance (human-authored vs. agent-written), confidence.
+Entity types, the relations between them, and the metadata every record carries: timestamp, provenance (human-authored vs. agent-written), confidence. Full schema: [data-model.md](data-model.md) — eleven entities across three layers (structural spine, knowledge entities, cross-cutting), plus the four repeating patterns that hold them together.
 
 > **Why first:** the schema is the one thing every later layer inherits. An hour here prevents weeks of rework in the API, the CLI, and the eventual graph migration.
 
@@ -56,6 +56,7 @@ A short instructions file per environment — `CLAUDE.md`, `.cursorrules`, `copi
 - **You need multi-hop relationship queries** Notion's database model can't express.
 - **You're hitting Notion API rate limits** under real usage.
 - **The schema needs a shape** Notion's flat databases can't represent.
+- **Raw content volume outgrows what Notion attachments handle comfortably** — the signal to split raw storage out of Notion, not a decision to make in advance.
 
 ---
 
