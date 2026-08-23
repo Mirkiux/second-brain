@@ -8,11 +8,13 @@ Three parts, in order: the one thing nothing can automate, then your choice of a
 
 Do this first, regardless of which path you take in part 2 or 3 below. Notion doesn't expose an API to create an integration or to share a page with one — the same reason there's no API to mint yourself an OAuth app on most platforms. No agent, script, or skill in this repo can do these two things for you.
 
-1. Go to [notion.so/my-integrations](https://www.notion.so/my-integrations) and click **New integration**.
-2. Name it something recognizable — `second-brain-terraform` — and associate it with your workspace.
-3. Set its type to **Internal**, not Public. This is a plain static access token tied to your one workspace, not an OAuth app — no redirect URI, no client secret, no rotating token pair. Terraform can't do an interactive OAuth flow, so Internal is the only type that works here. (This is unrelated to the OAuth flow in part 2/3 below — that's a separate integration Notion runs itself for its hosted MCP server, not one you create.)
-4. Under **Capabilities**, enable **Read content**, **Update content**, and **Insert content**. Leave the user-information capabilities off; nothing here needs them.
-5. Save, then copy the **Internal Integration Secret** it gives you — that's the access token itself, ready to use as-is. Treat it like a password; it's the credential Terraform uses to create and modify things in your Notion workspace.
+1. Go to [notion.so/my-integrations](https://www.notion.so/my-integrations) — current Notion versions land you on a **Connections** page — and click **New connection** (older versions label the same button **New integration**).
+2. Name it something recognizable — `second-brain-terraform`.
+3. Under **Authentication method** (Notion's own screen describes each option — this is what to look for, whatever it's labeled in your language or UI version):
+   - **Access token** *(current UI; older UI calls this "Internal")* — a static API token scoped to one workspace. **This is the one to pick.**
+   - **OAuth** *(older UI: "Public")* — a rotating token pair for apps distributed across multiple workspaces via a browser consent flow. Don't pick this one — Terraform can't drive an interactive OAuth flow, and this is unrelated to the separate OAuth flow used by Notion's hosted MCP server in part 2/3 below, which isn't something you set up here at all.
+4. Create it, then look for capability toggles — **Read content**, **Update content**, **Insert content** — and enable them; where exactly they appear has moved around between Notion UI versions, but the names haven't.
+5. Copy the secret it gives you — labeled **Access Token** or **Internal Integration Secret** depending on your Notion UI version, same thing either way. Treat it like a password; it's the credential Terraform uses to create and modify things in your Notion workspace.
 6. In Notion, create a new page — call it **Second Brain**. This becomes the parent of all eleven databases.
 7. Open that page's `···` menu → **Connections** → add the integration you just created.
 8. Copy the page's ID: the 32-character string at the end of its URL (`notion.so/Second-Brain-<32 characters>`). With or without dashes both work.
