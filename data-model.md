@@ -1,6 +1,6 @@
 # Second Brain Data Model
 
-Eleven databases in three layers, connected by four repeating patterns. Referenced from [step 1](README.md#1-define-the-schema--on-paper-before-any-tool) of the build order.
+Eleven databases in three layers, connected by four repeating patterns. Referenced from [step 1](build_order.md#1-define-the-schema--on-paper-before-any-tool) of the build order.
 
 ## Overview
 

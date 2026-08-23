@@ -1,17 +1,8 @@
 # Terraform — Second Brain schema
 
-Provisions the eleven databases from [`../data-model.md`](../data-model.md) using the community [`delize/notion`](https://registry.terraform.io/providers/delize/notion) provider. Scope is deliberately narrow: **schema only**. Actual Notes, Decisions, Experiments and every other knowledge entry flow through the API/CLI/MCP layer from [step 4](../README.md#4-thin-rest-api--the-keystone) onward, never through `notion_database_entry` — Terraform's plan/apply/drift model doesn't belong on top of an ever-growing, agent-written knowledge stream. The one exception is a handful of genuinely static reference rows (an initial Topic list, your Workplace entries) if you want those version-controlled too.
+Provisions the eleven databases from [`../data-model.md`](../data-model.md) using the community [`delize/notion`](https://registry.terraform.io/providers/delize/notion) provider. Scope is deliberately narrow: **schema only**. Actual Notes, Decisions, Experiments and every other knowledge entry flow through the API/CLI/MCP layer from [step 4](../build_order.md#4-thin-rest-api--the-keystone) onward, never through `notion_database_entry` — Terraform's plan/apply/drift model doesn't belong on top of an ever-growing, agent-written knowledge stream. The one exception is a handful of genuinely static reference rows (an initial Topic list, your Workplace entries) if you want those version-controlled too.
 
-## One-time setup
-
-1. Create a Notion integration at [notion.so/my-integrations](https://www.notion.so/my-integrations) and copy its token.
-2. Create (or pick) the Notion page that will be the parent of all eleven databases, and **share it with the integration** from the page's `···` menu — the API can't see anything you haven't explicitly shared, and nothing in Terraform can do this step for you.
-3. Copy that page's ID (the 32-character string in its URL) into `terraform.tfvars` (copy `terraform.tfvars.example` — never commit the real file).
-4. Export the token as an environment variable rather than putting it in any `.tf`/`.tfvars` file:
-   ```shell
-   export NOTION_TOKEN="secret_..."
-   ```
-5. `terraform init`, then `terraform plan` and read it before `terraform apply`.
+For the full prerequisites-through-`apply` walkthrough, start at the [repo README](../README.md) — this file is technical reference for what's in here, not the onboarding guide.
 
 ## Before you trust this in production
 
