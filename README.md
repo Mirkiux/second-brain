@@ -8,7 +8,7 @@ Three parts, in order: the one thing nothing can automate, then your choice of a
 
 Do this first, regardless of which path you take in part 2 or 3 below. Notion doesn't expose an API to create an integration or to share a page with one — the same reason there's no API to mint yourself an OAuth app on most platforms. No agent, script, or skill in this repo can do these two things for you.
 
-1. Go to [notion.so/my-integrations](https://www.notion.so/my-integrations) — current Notion versions land you on a **Connections** page — and click **New connection** (older versions label the same button **New integration**).
+1. Go to [app.notion.com/developers/connections](https://app.notion.com/developers/connections) (the older [notion.so/my-integrations](https://www.notion.so/my-integrations) link still redirects here) and click **New connection** (older Notion versions label the same button **New integration**).
 2. Name it something recognizable — `second-brain-terraform`.
 3. Under **Authentication method** (Notion's own screen describes each option — this is what to look for, whatever it's labeled in your language or UI version):
    - **Access token** *(current UI; older UI calls this "Internal")* — a static API token scoped to one workspace. **This is the one to pick.**
