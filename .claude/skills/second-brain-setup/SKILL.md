@@ -37,20 +37,26 @@ Re-run `terraform -version` and confirm it reports >= 1.5.
 
 Skip entirely if the user only wants Terraform installed, or only wants the MCP server connected. Terraform needs an Internal/Access-token integration regardless of what path step 3 takes for MCP — walk the user through root `README.md` part 1 if they haven't done it yet (Notion doesn't expose an API for either sub-step there, so this part can't be automated further).
 
-Once the user has the token and the page ID, have them set both as environment variables in **this terminal session** — never write either to a file:
+**Architectural constraint, not a preference: don't ask the user to export these in a terminal they opened themselves, and don't try to export them yourself across separate tool calls either.** Neither works here. A terminal the user opens is a different OS process from whatever runs this agent's shell commands — environment variables never cross that boundary. And this agent's own shell invocations don't share state with each other either; each one starts fresh, so `export` in one call and `terraform apply` in the next would fail the same way even without a human terminal involved at all. (This is specific to how Claude Code executes commands — tools that let a human type directly into the same terminal session the agent drives, like Kiro, don't have this problem. Don't assume the same pattern transfers.)
+
+What actually works — the human runs the credential-dependent commands themselves, in one continuous terminal session, right through to `terraform plan`:
 
 ```shell
-# bash / Git Bash
+# bash / Git Bash — typed by the human, one continuous session
 export NOTION_TOKEN="..."
 export TF_VAR_root_page_id="..."
+cd terraform
+terraform init && terraform validate && terraform plan
 ```
 ```powershell
-# PowerShell
+# PowerShell — typed by the human, one continuous session
 $env:NOTION_TOKEN = "..."
 $env:TF_VAR_root_page_id = "..."
+cd terraform
+terraform init; terraform validate; terraform plan
 ```
 
-Confirm both are actually set before moving on (e.g. check the variables are non-empty) — without ever echoing the token's value back into the terminal or a log.
+Give the user this block and step back for this specific part — don't attempt to run it. Once they report back that `plan` looks right, resume at step 4 to review it together and decide on `apply`. If the user explicitly wants the agent to run `terraform apply` itself despite this, see the two opt-in options in step 4 — both have a real tradeoff the user should choose deliberately, not have assumed on their behalf.
 
 ## 3. Notion MCP server — only if it's in scope
 
@@ -67,18 +73,14 @@ Ask once which path: hosted OAuth (default — no token to manage) or self-hoste
 
 Only do this if the original request included provisioning, not just getting prerequisites ready.
 
-```shell
-cd terraform
-terraform init
-terraform validate
-terraform plan
-```
+**Default path:** the user ran `init`/`validate`/`plan` themselves per step 2. Review the plan output with them — it should show exactly 11 `notion_database` resources plus their properties and relations, nothing else — then have them run `terraform apply` themselves too, in that same terminal, for the same reason step 2 wasn't delegated to the agent.
 
-Show the plan to the user and get explicit confirmation before running `terraform apply` — this creates real databases in their live Notion workspace, so it never runs silently as a continuation of some other request.
+**If the user explicitly wants the agent to run `terraform apply` itself** — accept this only as a deliberate choice, and pick one:
 
-```shell
-terraform apply
-```
+- **One-shot combined command:** ask for the token and page ID directly in this conversation, then run the export and `terraform apply` as a single tool invocation so the variables survive for that one command. Tell the user plainly, before doing it, that this puts the token's value into the conversation itself — a real if modest and revocable exposure, not something to do by default.
+- **Local, gitignored env script the agent never reads:** have the user create a small file themselves, outside the agent's view, containing the two export/`$env:` lines, saved under a path already covered by `.gitignore` (e.g. `terraform/.env.local` — confirm it's ignored before touching it). Then run `source terraform/.env.local && terraform apply` (bash) or the PowerShell dot-sourcing equivalent as a single invocation — the agent never needs to see or type the actual secret.
+
+Either opt-in path still means: show the plan, get explicit confirmation, then apply.
 
 ## 5. Report
 

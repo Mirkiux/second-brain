@@ -26,7 +26,7 @@ If you're working inside an AI coding tool that can run shell commands (Claude C
 - In Claude Code, just ask it to set up the Second Brain prerequisites, or invoke the `second-brain-setup` skill by name.
 - It installs Terraform for your OS, and registers the Notion MCP server — defaulting to the hosted, OAuth-based one, so there's no second token to manage (full per-client table in [`harnessing/mcp/README.md`](harnessing/mcp/README.md)).
 - It will stop and ask you to do part 1 above if you haven't yet, and will prompt you for the one-time browser OAuth approval when the MCP connection first activates — that click is the only human step left on this path.
-- Once it reports success, skip ahead to [part 4](#4-provision-the-schema).
+- Once it reports success, skip ahead to [part 4](#4-provision-the-schema) — but expect to run the actual `terraform apply` yourself, in your own terminal, right after setting `NOTION_TOKEN` and `TF_VAR_root_page_id` there. That's deliberate, not a gap in the skill: Claude Code's tool execution can't share environment variables with a terminal you opened yourself, or even reliably between its own separate commands, so the credential-dependent step is designed to hand back to you rather than silently fail or ask you to paste a secret into the conversation.
 
 What an agent should actually do with this knowledge base once connected — search-before-write, how to handle contradictions, scoping, tagging — is documented once in [`harnessing/AGENT_INSTRUCTIONS.md`](harnessing/AGENT_INSTRUCTIONS.md); every tool-specific file (`CLAUDE.md`, `AGENTS.md`, `.github/copilot-instructions.md`, `.cursor/rules/`, `.kiro/steering/`) just points there.
 

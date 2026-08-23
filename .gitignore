@@ -2,3 +2,10 @@
 *.tfstate
 *.tfstate.backup
 terraform.tfvars
+.env.local
+
+# Per-client MCP config, only relevant if you use the self-hosted,
+# token-based Notion MCP server with a project-scoped config file
+# (the default hosted OAuth path never writes a token to disk).
+.cursor/mcp.json
+.vscode/mcp.json
