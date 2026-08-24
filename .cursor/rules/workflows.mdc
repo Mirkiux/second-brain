@@ -1,0 +1,10 @@
+---
+description: Generic ticket workflow protocol
+alwaysApply: false
+---
+
+When asked to follow the ticket workflow, read:
+
+- Generic ticket workflow: [`harnessing/workflows/generic-ticket-workflow.md`](../../harnessing/workflows/generic-ticket-workflow.md)
+
+This file is the single source of truth for the end-to-end ticket protocol. It is generic and portable — workplace-specific values (Jira project, GitLab group, repo paths) are retrieved from the active Workplace entry in Notion at runtime, not embedded here.
