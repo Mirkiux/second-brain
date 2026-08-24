@@ -1,0 +1,13 @@
+---
+description: How to use Jira, Confluence, Rovo Dev CLI, and the ticket workflow
+alwaysApply: false
+---
+
+When asked to work with Jira, Confluence, or Rovo Dev, or to follow the ticket workflow, read the relevant file from `harnessing/`:
+
+- Jira CLI usage: [`harnessing/atlassian/jira.md`](../../harnessing/atlassian/jira.md)
+- Confluence CLI usage: [`harnessing/atlassian/confluence.md`](../../harnessing/atlassian/confluence.md)
+- Rovo Dev CLI usage: [`harnessing/atlassian/rovo.md`](../../harnessing/atlassian/rovo.md)
+- Ticket workflow protocol: [`harnessing/workflows/ticket-workflow.md`](../../harnessing/workflows/ticket-workflow.md)
+
+These files are the single source of truth. Do not embed workplace-specific values — retrieve them from the active Workplace entry in Notion first.

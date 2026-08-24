@@ -1,3 +1,12 @@
 # Second Brain
 
 @harnessing/AGENT_INSTRUCTIONS.md
+
+## Atlassian tools and ticket workflow
+
+Load these only when explicitly requested or when the ticket workflow is active:
+
+@harnessing/atlassian/jira.md
+@harnessing/atlassian/confluence.md
+@harnessing/atlassian/rovo.md
+@harnessing/workflows/ticket-workflow.md
