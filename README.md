@@ -8,6 +8,8 @@ Three parts, in order: the one thing nothing can automate, then your choice of a
 
 Do this first, regardless of which path you take in part 2 or 3 below. Notion doesn't expose an API to create an integration or to share a page with one — the same reason there's no API to mint yourself an OAuth app on most platforms. No agent, script, or skill in this repo can do these two things for you.
 
+**Already done this once, on another machine?** The integration and the **Second Brain** page both live in your Notion workspace, not on any one machine — don't repeat this section or create a second integration. Just retrieve the same token (wherever you stored it) and the page ID (from the page's URL in Notion) and skip to [part 2](#2-install-the-rest-using-an-agent) or [part 3](#3-install-the-rest-manually-no-agent). If the schema's already provisioned too, part 4 has nothing left to do either — the `second-brain-setup` skill checks Notion itself for this before touching Terraform.
+
 1. Go to [app.notion.com/developers/connections](https://app.notion.com/developers/connections) and click **New connection**.
 2. Name it something recognizable — `second-brain-terraform`.
 3. Under **Authentication method**, choose **Access token** — a static API token scoped to your workspace. Don't choose **OAuth**: that's for apps distributed across multiple workspaces via a browser consent flow, and Terraform can't drive an interactive flow like that. (This is also unrelated to the separate OAuth step in part 2/3 below, which belongs to Notion's hosted MCP server and isn't set up here.)
@@ -17,15 +19,16 @@ Do this first, regardless of which path you take in part 2 or 3 below. Notion do
 7. Open that page's `···` menu → **Connections** → add the integration you just created.
 8. Copy the page's ID: the 32-character string at the end of its URL (`notion.so/Second-Brain-<32 characters>`). With or without dashes both work.
 
-Keep the token and the page ID handy — both paths below, and the schema provisioning step, need them.
+Keep the token and the page ID handy — both paths below, and the schema provisioning step, need them. The same token also works for the Notion CLI path in parts 2 and 3, if MCP servers aren't allowed in your environment.
 
 ## 2. Install the rest using an agent
 
 If you're working inside an AI coding tool that can run shell commands (Claude Code, Cursor, Copilot, Kiro, Codex, …), this repo ships a setup skill that does the remaining installation for you: **[`second-brain-setup`](.claude/skills/second-brain-setup/SKILL.md)**.
 
 - In Claude Code, just ask it to set up the Second Brain prerequisites, or invoke the `second-brain-setup` skill by name.
-- It installs Terraform for your OS, and registers the Notion MCP server — defaulting to the hosted, OAuth-based one, so there's no second token to manage (full per-client table in [`harnessing/mcp/README.md`](harnessing/mcp/README.md)).
-- It will stop and ask you to do part 1 above if you haven't yet, and will prompt you for the one-time browser OAuth approval when the MCP connection first activates — that click is the only human step left on this path.
+- It installs Terraform for your OS, and connects Notion — defaulting to the hosted, OAuth-based MCP server, so there's no second token to manage (full per-client table in [`harnessing/mcp/README.md`](harnessing/mcp/README.md)).
+- **If MCP servers aren't allowed in your environment** — some corporate laptops permit CLI tools but block MCP servers outright — say so up front (e.g. "set up second brain, MCP is blocked here, use the CLI"). The skill installs the official Notion CLI (`ntn`) instead and authenticates it by reusing the integration token from part 1, rather than registering an MCP server. See [`harnessing/cli/README.md`](harnessing/cli/README.md) for exactly what that does.
+- It will stop and ask you to do part 1 above if you haven't yet. On the MCP path, it will also prompt you for the one-time browser OAuth approval when the connection first activates — that click is the only human step left there; the CLI path has no equivalent browser step since it reuses the token.
 - Once it reports success, skip ahead to [part 4](#4-provision-the-schema) — but expect to run the actual `terraform apply` yourself, in your own terminal, right after setting `NOTION_TOKEN` and `TF_VAR_root_page_id` there. That's deliberate, not a gap in the skill: Claude Code's tool execution can't share environment variables with a terminal you opened yourself, or even reliably between its own separate commands, so the credential-dependent step is designed to hand back to you rather than silently fail or ask you to paste a secret into the conversation.
 
 What an agent should actually do with this knowledge base once connected — search-before-write, how to handle contradictions, scoping, tagging — is documented once in [`harnessing/AGENT_INSTRUCTIONS.md`](harnessing/AGENT_INSTRUCTIONS.md); every tool-specific file (`CLAUDE.md`, `AGENTS.md`, `.github/copilot-instructions.md`, `.cursor/rules/`, `.kiro/steering/`) just points there.
@@ -57,9 +60,24 @@ terraform -version
 
 You do **not** need to separately install the Notion *Terraform provider* (`delize/notion`) — `terraform init` in part 4 downloads it automatically from the public Terraform Registry the first time you run it in this repo, pinned by the committed `.terraform.lock.hcl`. There's nothing to install here beyond the Terraform CLI itself.
 
-### Connect the Notion MCP server (for agent use later — optional if you only want to provision the schema today)
+### Connect Notion for agent use later (optional if you only want to provision the schema today)
 
-Terraform doesn't use MCP at all — it talks to Notion directly via `NOTION_TOKEN`. This step is only needed once you actually want an AI agent to use the knowledge base. Register the hosted server as an HTTP-transport MCP server in your client of choice; see [`harnessing/mcp/README.md`](harnessing/mcp/README.md) for the exact command or config per client (Claude Code, VS Code, Cursor, Codex, Kiro, …) and the self-hosted, token-based alternative.
+Terraform doesn't use either of these at all — it talks to Notion directly via `NOTION_TOKEN`. This step is only needed once you actually want an AI agent to use the knowledge base. Pick whichever transport your environment allows:
+
+**MCP server (default).** Register the hosted server as an HTTP-transport MCP server in your client of choice; see [`harnessing/mcp/README.md`](harnessing/mcp/README.md) for the exact command or config per client (Claude Code, VS Code, Cursor, Codex, Kiro, …) and the self-hosted, token-based alternative.
+
+**Notion CLI (`ntn`) — if MCP servers aren't allowed in your environment.** Some corporate laptops permit CLI tools but block MCP servers outright. Install `ntn`, then authenticate by reusing the same integration token from part 1 — no separate login, no browser:
+
+```shell
+# bash / Git Bash
+export NOTION_API_TOKEN="ntn_..."   # same value as NOTION_TOKEN above
+```
+```powershell
+# PowerShell
+$env:NOTION_API_TOKEN = "ntn_..."
+```
+
+Full install-per-OS table, the token-reuse explanation, and the command-to-MCP-tool mapping an agent needs: [`harnessing/cli/README.md`](harnessing/cli/README.md).
 
 ## 4. Provision the schema
 
@@ -121,4 +139,4 @@ Type `yes` to confirm.
 
 ## What's next
 
-Schema provisioned means [build order](build_order.md) step 3 is done. Step 4 — the thin REST API — is next, and it's what everything after this point (CLI, MCP server, agents) will actually talk to instead of Notion directly.
+Schema provisioned means [build order](build_order.md) step 3 is done. Step 4 — the thin REST API — is next, and it's what everything after this point (this project's own future CLI, its MCP server, agents) will actually talk to instead of Notion directly.

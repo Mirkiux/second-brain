@@ -4,7 +4,14 @@ This is the one canonical copy of how an AI agent should use this knowledge base
 
 ## Where the data lives right now
 
-Until [build order](../build_order.md) step 4 (the thin REST API) exists, agents reach the knowledge base **directly through the Notion MCP server** — see [`mcp/README.md`](mcp/README.md) for how that's wired up per tool. Once step 4 ships, talk to that API instead of Notion directly; the API is where dedup, staleness checks, and embeddings live, and bypassing it re-creates the exact curation gap this project exists to avoid.
+Until [build order](../build_order.md) step 4 (the thin REST API) exists, agents reach the knowledge base **directly through Notion** — via whichever of these two transports the environment actually allows:
+
+- **MCP servers allowed (default):** the Notion MCP server — see [`mcp/README.md`](mcp/README.md) for per-client setup. Use its tools directly (`notion-search`, `notion-fetch`, `notion-create-pages`, `notion-update-page`, `notion-query-data-sources`, …).
+- **MCP servers blocked (some corporate environments allow CLI tools but not MCP):** Notion's official `ntn` CLI instead — see [`cli/README.md`](cli/README.md) for install, auth, and the command-to-MCP-tool mapping. Same operations, run as shell commands instead of tool calls; the "before writing anything" rules below apply identically either way.
+
+If you're unsure which applies, check what's already connected before assuming: an MCP `notion` connection listed by the client, or `ntn --version` succeeding plus `NOTION_API_TOKEN` set, tells you which path this environment is already on.
+
+Once step 4 ships, talk to that API instead of Notion directly — through either transport; the API is where dedup, staleness checks, and embeddings live, and bypassing it re-creates the exact curation gap this project exists to avoid.
 
 ## Schema awareness
 
