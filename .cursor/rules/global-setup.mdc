@@ -1,0 +1,6 @@
+---
+description: How to wire harnessing/ globally for any working directory
+alwaysApply: false
+---
+
+Read [`harnessing/global-setup.md`](../../harnessing/global-setup.md) for instructions on registering user-level config files so `harnessing/` skills and workflows are available in any repo, not just second-brain.

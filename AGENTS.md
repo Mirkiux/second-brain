@@ -9,4 +9,8 @@ Load these only when explicitly requested or when the ticket workflow is active:
 - Jira CLI: [`harnessing/atlassian/jira.md`](harnessing/atlassian/jira.md)
 - Confluence CLI: [`harnessing/atlassian/confluence.md`](harnessing/atlassian/confluence.md)
 - Rovo Dev CLI: [`harnessing/atlassian/rovo.md`](harnessing/atlassian/rovo.md)
-- Ticket workflow: [`harnessing/workflows/generic-ticket-workflow.md`](harnessing/workflows/generic-ticket-workflow.md)
+- Generic ticket workflow: [`harnessing/workflows/generic-ticket-workflow.md`](harnessing/workflows/generic-ticket-workflow.md)
+
+## Global setup
+
+To make `harnessing/` available in any repo (not just second-brain), see [`harnessing/global-setup.md`](harnessing/global-setup.md).
