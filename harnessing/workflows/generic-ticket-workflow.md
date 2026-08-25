@@ -10,6 +10,7 @@ Load this workflow only when explicitly requested. It is not always-on. When act
 - `harnessing/atlassian/jira.md` — for all Jira operations
 - `harnessing/atlassian/confluence.md` — for Step 2.4
 - `harnessing/atlassian/rovo.md` — for Path A operations
+- `harnessing/AGENT_INSTRUCTIONS.md` — for all Notion knowledge base reads and writes (Steps 1b, 2b, 13)
 
 ## Workplace Context — Load Before Step 1
 
@@ -92,12 +93,14 @@ Present your own understanding to the user (not raw CLI output). Ask: "Does this
 
 ## STEP 1b — Check for Prior Work Documentation
 
+Search the Notion second-brain for existing Notes linked to this ticket:
+
 ```bash
-ls ~/Proyectos/*/documentation/tickets/<TICKET_KEY>/ 2>/dev/null
+ntn api v1/search -d '{"query":"<TICKET_KEY>","filter":{"property":"object","value":"page"}}'
 ```
 
-- **Not found**: confirm "No prior documentation found. Proceeding as a fresh start." and continue.
-- **Found**: read all files present (`README.md`, `lessons-learned.md`, `decisions.md`, `runbook.md`, `artifacts/`).
+- **Not found**: confirm "No prior documentation found in knowledge base. Proceeding as a fresh start." and continue.
+- **Found**: fetch each result with `ntn pages get <id>` and read its Body/content.
 
 If found, present a structured summary:
 1. What was done previously and current state
@@ -125,7 +128,7 @@ If insufficient, issue a follow-up using the available path:
 
 ### 2.2 — Check Known Repositories
 
-Check the repo index from the Workplace entry. For each candidate, read its documentation file at `~/Proyectos/<ProjectName>/documentation/repos/<repo-name>/README.md`. If there's a clear match, state it and go to the approval gate.
+Check the repo index from the Workplace entry. For each candidate, search the Notion Repo database for its entry and read its body. If there's a clear match, state it and go to the approval gate.
 
 ### 2.3 — Search Similar Past Tickets
 
@@ -158,34 +161,31 @@ If the repo was not in the known list (found via 2.3–2.5), proceed to **Step 2
 
 ## STEP 2b — Update Repo Knowledge Base (only if repo was new)
 
-Create a new repo documentation file:
-```
-~/Proyectos/<ProjectName>/documentation/repos/<repo-name>/README.md
-```
+Read `~/.kiro/harnessing/AGENT_INSTRUCTIONS.md` for the full schema before writing.
 
-Structure:
-```markdown
-# <repo-name>
+Search whether a Repo entry already exists:
 
-## Overview
-- **SCM URL**: `<url>`
-- **Local path**: `~/Proyectos/<ProjectName>/<repo-name>`
-- **Description**: <what this repo does>
-- **Relevant for**: <when to use this repo>
-
-## Tooling          ← only if non-obvious tooling is required
-## Access & Credentials  ← only if credentials or secrets are involved
-## Deployment       ← only if there is a deployment runbook or process
+```bash
+ntn api v1/search -d '{"query":"<repo-name>","filter":{"property":"object","value":"page"}}'
 ```
 
-Also update the repo index in the Workplace entry in Notion. Confirm to the user before continuing to Step 3.
+If not found, create a new page in the Repo database using the ntn CLI. Include:
+- **Name**: repo name
+- **SCM URL**: GitLab/GitHub URL
+- **Local path**: local checkout path
+- **Description**: what this repo does and when to use it
+- **Tooling, Access, Deployment**: only if non-obvious
+
+Also search for the Workplace entry and update its repo index relation to include the new Repo page.
+
+Confirm to the user before continuing to Step 3.
 
 ---
 
 ## STEP 3 — Ensure the Repo is Cloned Locally
 
-- Check if the repo exists at `~/Proyectos/<ProjectName>/<repo-name>/`
-- If not, clone it from the SCM URL into the correct path
+- Check the Repo entry in Notion for the local path
+- If the repo does not exist locally, clone it from the SCM URL into the correct path
 - Always end on `master` (or `main`) and pull latest
 
 ---
@@ -287,7 +287,7 @@ Summarize requested changes, implement on the ticket branch, push updates, infor
 
 ### 11.2 — Check for Deployment Gate (CD CR or equivalent)
 
-Read the repo's documentation file at `~/Proyectos/<ProjectName>/documentation/repos/<repo-name>/README.md`. Look for any deployment gate process (CD CR, change request, approval pipeline). If present, follow the repo-specific steps documented there. If not documented, ask the user.
+Search the Repo entry in Notion for any deployment gate process documented in its body (CD CR, change request, approval pipeline). If present, follow the repo-specific steps documented there. If not documented, ask the user.
 
 ### 11.3 — Verify SCM Approval Status
 
@@ -313,29 +313,49 @@ Ask: "Does this documentation accurately reflect the work done?"
 
 ---
 
-## STEP 13 — Save Documentation to Local Knowledge Base
+## STEP 13 — Save Documentation to Notion Knowledge Base
 
-### 13.1 — Save Ticket Documentation
+Read `~/.kiro/harnessing/AGENT_INSTRUCTIONS.md` for the full schema, writing rules, and how to scope and tag entries before creating anything. The short version: search first, scope to the narrowest level, tag Topics, set Provenance to `Agent`, set Epistemic Status honestly.
 
-Create:
-```
-~/Proyectos/<ProjectName>/documentation/tickets/<TICKET_KEY>/
-```
+### 13.1 — Save Work Item entry
 
-Always create:
-- **`README.md`** — problem, solution, repos, environments, outcome, date, links
-- **`lessons-learned.md`** — gotchas, surprises, things to do differently next time
+Search whether a Work Item page for `<TICKET_KEY>` already exists. If not, create one in the Work Item database:
+- **Name**: `<TICKET_KEY>`
+- **Status**: `Closed`
+- **Type**: `Ticket`
+- **Repos**: relation to all Repo entries touched
 
-Create only when relevant:
-- **`decisions.md`** — non-trivial decisions, alternatives considered, rationale
-- **`runbook.md`** — step-by-step execution details for complex or recurring work
-- **`artifacts/`** — any output files (reports, CSVs, JSONs) produced during the ticket
+### 13.2 — Save solution Note
 
-### 13.2 — Update Repo Knowledge Base
+Create a Note in the Note database:
+- **Name**: `<TICKET_KEY> solution summary: <one-line description>`
+- **Subtype**: `Fact`
+- **Epistemic Status**: `Confirmed`
+- **Provenance**: `Agent`
+- **Reusability**: `Project-specific` (unless the solution pattern is broadly applicable)
+- **Work Item**: relation to the Work Item entry from 13.1
+- **Repo**: relation to the primary repo touched
+- **Topics**: tag with relevant Topic entries (e.g. CI-CD, Terraform, etc.)
+- **Body**: problem, solution, key values/IDs, outcome, MR links, date
 
-For each repo touched, evaluate whether anything learned should be added to its `README.md`. Consider: new tooling knowledge, gotchas, environment details, credential notes, updated deployment steps.
+### 13.3 — Save lessons-learned Notes
 
-Confirm: "Local documentation saved to `~/Proyectos/<ProjectName>/documentation/tickets/<TICKET_KEY>/`. Repo knowledge base updated for: `<repos updated or 'no updates needed'>`."
+For each distinct lesson learned, create a separate Note:
+- **Name**: short descriptive title of the lesson (not tied to the ticket key)
+- **Subtype**: `Gotcha` or `Pattern` as appropriate
+- **Epistemic Status**: `Confirmed`
+- **Provenance**: `Agent`
+- **Reusability**: `Generalizable` if it applies beyond this repo/ticket; `Project-specific` otherwise
+- **Work Item**: relation to the Work Item entry
+- **Repo**: relation to the repo where the lesson was learned
+- **Topics**: tag appropriately — this is what makes lessons discoverable across unrelated future tickets
+- **Body**: what happened, root cause, fix pattern, rule for the future
+
+### 13.4 — Update Repo entries for new knowledge
+
+For each repo touched, search its existing Repo page in Notion and evaluate whether any new tooling, gotcha, environment detail, credential note, or deployment step should be appended. Update the Repo page body if needed.
+
+Confirm: "Knowledge base updated in Notion. Work Item, solution Note, and lesson Notes created/updated for `<TICKET_KEY>`."
 
 ---
 
