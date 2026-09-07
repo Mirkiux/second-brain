@@ -19,7 +19,9 @@ Read [`data-model.md`](../data-model.md) before writing anything. The short vers
 
 ## Before writing anything
 
-1. **Search first.** Check Notes, Decisions, and Topics for existing entries on the same subject before creating a new one. This project's whole premise is that knowledge accumulates instead of being re-derived — skipping the search defeats it.
+1. **Search first.** Check for existing entries on the same subject before creating a new one. This project's whole premise is that knowledge accumulates instead of being re-derived — skipping the search defeats it.
+   - **Use [`scripts/sb-search.mjs`](scripts/sb-search.mjs), not Notion's `/v1/search`.** Notion's search matches page *titles* only, as an unordered OR of words with no stopword removal — a query like "MS Data Science" returns every title containing "data" and misses anything whose match is in the body. `sb-search` caches the whole KB locally and ranks over title + body + Topic tags: `node harnessing/scripts/sb-search.mjs "<distinctive words>"`. Pass `--refresh` if you just wrote an entry this session. Details and the interim-until-step-4 rationale: [`../planning/dry-run-findings.md`](../planning/dry-run-findings.md).
+   - For a pure "does entity X already exist" check, a scoped `ntn api v1/data_sources/<ds-id>/query` with a `{"property":"Name","title":{"contains":"…"}}` filter is also reliable.
 2. **If it contradicts something that exists:** don't edit the old entry in place. Decide which case you're in:
    - Clearly wrong, new information corrects it → create the new entry, link it via `Supersedes`, set the old entry's Status to `Superseded`.
    - Genuinely ambiguous, both claims look credible → create the new entry, link it via `Conflicts With`, set Status to `Disputed` on both, and **stop** — surface it, don't resolve it yourself. This is the one case where silent action is the wrong move even for a trusted agent.

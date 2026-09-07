@@ -43,7 +43,8 @@ No dedicated `search` or `query` subcommand exists for every case — those go t
 
 | Operation | MCP tool equivalent | `ntn` command |
 |---|---|---|
-| Search the workspace | `notion-search` | `ntn api v1/search -d '{"query":"..."}'` |
+| Search the KB (**preferred**) | — | `node harnessing/scripts/sb-search.mjs "<words>"` — ranked over title + body + tags; see [`AGENT_INSTRUCTIONS.md`](../AGENT_INSTRUCTIONS.md) rule 1 |
+| Raw workspace search (title-only, weak) | `notion-search` | `ntn api v1/search -d '{"query":"..."}'` — one distinctive word only; never a sentence |
 | Read a page | `notion-fetch` | `ntn pages get <page-id>` — returns Markdown |
 | Map a database to its data source(s) | (implicit) | `ntn datasources resolve <database-id>` |
 | Query a database | `notion-query-data-sources` | `ntn datasources query <data-source-id> -d '{"filter": {...}}'` |

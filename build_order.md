@@ -24,6 +24,8 @@ Point Claude Code (or Copilot, or Kiro) at Notion's own official MCP server, add
 
 > **Why:** a walking skeleton. This validates the workflow with an afternoon of setup instead of a month of engineering, and tells you what step 4 actually needs to do before you build it.
 
+**In progress.** Findings are accumulating in [`planning/dry-run-findings.md`](planning/dry-run-findings.md) — most importantly, that Notion's `/v1/search` is title-only with no stopword removal or ranking, which makes "search before write" unreliable and sharpens the step-4 search spec below. An interim local search helper ([`harnessing/scripts/sb-search.mjs`](harnessing/scripts/sb-search.mjs)) bridges the gap without pre-building step 4.
+
 ### 3. Build the Notion workspace to the schema
 
 Databases and properties that mirror step 1 exactly — not a freeform notebook. This is what makes the later API layer thin instead of a translation mess.
@@ -33,6 +35,8 @@ Databases and properties that mirror step 1 exactly — not a freeform notebook.
 A handful of endpoints your own: create, get, search, update / link, list-by-type. Generate embeddings on write and keep your own vector index alongside Notion, since Notion's native search is keyword-only. Add dedup and staleness checks at write time here — not later.
 
 > **Why now, and why yours:** every consumer below (CLI, MCP, agents) talks to this, never to Notion directly. That's the boundary that lets you swap the backend in Phase 2 without touching anything downstream.
+
+**`search` spec, sharpened by the dry run** (see [`planning/dry-run-findings.md`](planning/dry-run-findings.md) for the evidence): search **title + body**, not just title; return a relevance score and sort by it; combine semantic (embeddings) with keyword; filter by type, Topic, scope, and Status (exclude `Superseded`/`Deprecated`/`Abandoned` by default); and expose the same scoring to a **write-time dedup check** so "supersede vs. create new" is decided against real matches. At this KB's scale (hundreds of rows) the vector index is a flat file or `sqlite-vec`/`lancedb`, not a service — `harnessing/scripts/sb-search.mjs` already prototypes the cache + extraction + ranking read path.
 
 ### 5. CLI — a thin wrapper
 
@@ -47,6 +51,18 @@ Exposes the same API's operations as typed tools. No logic lives here that doesn
 A short instructions file per environment — `CLAUDE.md`, `.cursorrules`, `copilot-instructions.md`, Kiro's steering docs — telling each agent when and how to call your tools. Done: [`harnessing/`](harnessing/) holds the one canonical instructions file plus a thin pointer per tool, and the [`second-brain-setup`](.claude/skills/second-brain-setup/SKILL.md) skill installs Terraform and the Notion MCP server across clients.
 
 > **Why this instead of building a harness:** MCP clients already give you the provider-agnostic layer. Writing per-tool instructions is a config task; a custom harness would be redundant infrastructure.
+
+### 7b. Interim tooling surfaced by the dry run
+
+Small helpers that make step 2 usable without pre-building step 4. Keep them thin and
+disposable — step 4 subsumes them.
+
+- [`harnessing/scripts/sb-search.mjs`](harnessing/scripts/sb-search.mjs) — local ranked
+  search over a cached copy of the whole KB (title + body + Topic tags), because Notion's
+  `/v1/search` can't do "search before write". `AGENT_INSTRUCTIONS.md` mandates it.
+
+Anything added here should be logged in [`planning/dry-run-findings.md`](planning/dry-run-findings.md)
+with the friction that prompted it, so step 4's scope stays evidence-driven.
 
 ---
 
