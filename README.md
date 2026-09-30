@@ -77,6 +77,8 @@ export NOTION_API_TOKEN="ntn_..."   # same value as NOTION_TOKEN above
 $env:NOTION_API_TOKEN = "ntn_..."
 ```
 
+> A one-off `export` only lives in that terminal. For an **agent** to use `ntn` (and `sb-search.mjs`), persist the token where the agent's shell loads it — see [`harnessing/setup.md`](harnessing/setup.md) step 1, CLI path.
+
 Full install-per-OS table, the token-reuse explanation, and the command-to-MCP-tool mapping an agent needs: [`harnessing/cli/README.md`](harnessing/cli/README.md).
 
 ## 4. Provision the schema

@@ -1,4 +1,4 @@
-# confCli — Agent Instructions
+# confluence-cli — Agent Instructions
 
 This is the canonical reference for how an agent uses the Confluence CLI (`confcli`). It is tool-agnostic — the same instructions apply whether loaded via a Kiro skill, a Claude Code reference, or any other mechanism.
 

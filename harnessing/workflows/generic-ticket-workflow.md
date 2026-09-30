@@ -12,12 +12,16 @@ Load this workflow only when explicitly requested. It is not always-on. When act
 - `harnessing/atlassian/rovo.md` — for Path A operations
 - `harnessing/AGENT_INSTRUCTIONS.md` — for all Notion knowledge base reads and writes (Steps 1b, 2b, 13)
 
+**Paths.** `<harnessing>` below means the `harnessing/` directory of the second-brain repo — `harnessing/` when working inside second-brain itself, or `~/.kiro/harnessing/` (a symlink to it) when wired globally per `harnessing/global-setup.md`.
+
+**Searching the knowledge base.** Always use `sb-search` (`node <harnessing>/scripts/sb-search.mjs`), never Notion's `v1/search` — the latter matches titles only and is unreliable, see `AGENT_INSTRUCTIONS.md` rule 1. Pass `--refresh` after writing anything this session.
+
 ## Workplace Context — Load Before Step 1
 
 Before starting the workflow, retrieve the active Workplace entry from Notion:
 
 ```bash
-ntn api v1/search -d '{"query":"<workplace name>","filter":{"property":"object","value":"page"}}'
+node <harnessing>/scripts/sb-search.mjs "<workplace name>" --type Workplace
 ```
 
 From the Workplace entry, read:
@@ -37,16 +41,16 @@ Follow these steps **in order**. Pause at each APPROVAL GATE before proceeding. 
 
 ## STEP 1 — Read and Understand the Ticket
 
-### Check rovoDev Availability
+### Check rovo-dev Availability
 
-Run this check once. The result applies to all steps that would use rovoDev (Steps 1, 2.1, 2.3).
+Run this check once. The result applies to all steps that would use rovo-dev (Steps 1, 2.1, 2.3).
 
 ```bash
 # Stage 1 — is the binary installed?
 acli rovodev --version 2>/dev/null && echo "INSTALLED" || echo "NOT_INSTALLED"
 ```
 
-If `NOT_INSTALLED` → use **Path B** for all rovoDev steps.
+If `NOT_INSTALLED` → use **Path B** for all rovo-dev steps.
 
 ```bash
 # Stage 2 — is the service accessible? (only if INSTALLED)
@@ -58,7 +62,7 @@ acli rovodev doctor 2>&1 | grep -qE "binary : not found|consent\.json : not foun
 
 ---
 
-### Path A — rovoDev Available
+### Path A — rovo-dev Available
 
 ```bash
 acli rovodev run
@@ -70,7 +74,7 @@ acli rovodev run
 
 If gaps remain after reading the summary, issue targeted follow-up requests until context is sufficient.
 
-### Path B — jiraCli Fallback
+### Path B — jira-cli Fallback
 
 ```bash
 # 1. Full ticket details and comments
@@ -96,7 +100,7 @@ Present your own understanding to the user (not raw CLI output). Ask: "Does this
 Search the Notion second-brain for existing Notes linked to this ticket:
 
 ```bash
-ntn api v1/search -d '{"query":"<TICKET_KEY>","filter":{"property":"object","value":"page"}}'
+node <harnessing>/scripts/sb-search.mjs "<TICKET_KEY>" --type Note --type "Work Item"
 ```
 
 - **Not found**: confirm "No prior documentation found in knowledge base. Proceeding as a fresh start." and continue.
@@ -123,7 +127,7 @@ Use this lookup strategy in strict order, stopping as soon as you have a confide
 Review the Step 1 summary for explicit repo name, GitLab URL, branch name, or MR reference. If found, go to the approval gate.
 
 If insufficient, issue a follow-up using the available path:
-- **Path A**: ask rovoDev to look specifically for repo/branch/MR references in comments and linked issues
+- **Path A**: ask rovo-dev to look specifically for repo/branch/MR references in comments and linked issues
 - **Path B**: `PAGER=cat jira issue view <TICKET_KEY> --comments 50`
 
 ### 2.2 — Check Known Repositories
@@ -132,7 +136,7 @@ Check the repo index from the Workplace entry. For each candidate, search the No
 
 ### 2.3 — Search Similar Past Tickets
 
-- **Path A**: ask rovoDev to find resolved/closed tickets with related keywords that reference a repo, branch, or MR
+- **Path A**: ask rovo-dev to find resolved/closed tickets with related keywords that reference a repo, branch, or MR
 - **Path B**:
   ```bash
   jira issue list --jql 'project = <PROJECT-KEY> AND status in (Done, Resolved, Closed) AND (summary ~ "<keyword>" OR description ~ "<keyword>") ORDER BY updated DESC'
@@ -161,12 +165,12 @@ If the repo was not in the known list (found via 2.3–2.5), proceed to **Step 2
 
 ## STEP 2b — Update Repo Knowledge Base (only if repo was new)
 
-Read `~/.kiro/harnessing/AGENT_INSTRUCTIONS.md` for the full schema before writing.
+Read `<harnessing>/AGENT_INSTRUCTIONS.md` for the full schema before writing.
 
 Search whether a Repo entry already exists:
 
 ```bash
-ntn api v1/search -d '{"query":"<repo-name>","filter":{"property":"object","value":"page"}}'
+node <harnessing>/scripts/sb-search.mjs "<repo-name>" --type Repo
 ```
 
 If not found, create a new page in the Repo database using the ntn CLI. Include:
@@ -315,7 +319,7 @@ Ask: "Does this documentation accurately reflect the work done?"
 
 ## STEP 13 — Save Documentation to Notion Knowledge Base
 
-Read `~/.kiro/harnessing/AGENT_INSTRUCTIONS.md` for the full schema, writing rules, and how to scope and tag entries before creating anything. The short version: search first, scope to the narrowest level, tag Topics, set Provenance to `Agent`, set Epistemic Status honestly.
+Read `<harnessing>/AGENT_INSTRUCTIONS.md` for the full schema, writing rules, and how to scope and tag entries before creating anything. The short version: search first, scope to the narrowest level, tag Topics, set Provenance to `Agent`, set Epistemic Status honestly.
 
 ### 13.1 — Save Work Item entry
 

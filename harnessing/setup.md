@@ -40,7 +40,21 @@ Ask once which sub-path: hosted OAuth (default — no token to manage) or self-h
 Full detail (install table per OS, why the token is reusable, the command-to-MCP-tool mapping): [`harnessing/cli/README.md`](cli/README.md).
 
 1. Install `ntn` per OS — Windows: `winget install Notion.ntn`; macOS/Linux: `curl -fsSL https://ntn.dev | bash`; any OS with Node 22+/npm 10+: `npm install --global ntn`. Verify with `ntn --version`.
-2. Authenticate by reusing the integration token from root README part 1 — set `NOTION_API_TOKEN` to that same value, just a different env var name than Terraform's `NOTION_TOKEN`. This is synchronous: no OAuth wait, no browser, and no extra page-sharing step since the integration is already shared with the Second Brain page. **Architectural constraint, not a preference**: don't ask the user to export this in a terminal they opened themselves, and don't try to export it yourself across this agent's own separate tool calls either — hand the export to the user's own terminal.
+2. Authenticate by reusing the integration token from root README part 1 — set `NOTION_API_TOKEN` to that same value, just a different env var name than Terraform's `NOTION_TOKEN`. This is synchronous: no OAuth wait, no browser, and no extra page-sharing step since the integration is already shared with the Second Brain page.
+
+   **The agent itself must be able to see this variable** — unlike Terraform's credentials, which only the user's terminal needs, `ntn` is called *by the agent* (this setup's step 2, `sb-search.mjs`, the ticket workflow). A one-off `export` in some terminal is invisible to the agent, and an `export` in one of the agent's own tool calls doesn't survive to the next. So have the user persist it once, in a file the agent's shell loads, without pasting the secret into the conversation:
+
+   ```shell
+   # bash (Linux / WSL / macOS) — user runs this themselves; `read -s` keeps the token off screen and out of history
+   mkdir -p ~/.config/second-brain && read -rsp "Notion token: " t && printf 'export NOTION_API_TOKEN=%q\n' "$t" > ~/.config/second-brain/env && chmod 600 ~/.config/second-brain/env && unset t
+   grep -q second-brain/env ~/.bashrc || sed -i '1i [ -f ~/.config/second-brain/env ] && . ~/.config/second-brain/env' ~/.bashrc
+   ```
+   ```powershell
+   # PowerShell — persists for the user's account; restart the AI tool afterwards
+   [Environment]::SetEnvironmentVariable("NOTION_API_TOKEN", (Read-Host "Notion token"), "User")
+   ```
+
+   The `sed '1i'` puts the line at the *top* of `~/.bashrc`, above Ubuntu's "not running interactively, return" guard, so non-interactive agent shells pick it up too. The AI tool must be restarted afterwards to inherit it.
 3. Verify: `ntn pages get <root_page_id>` should return the Second Brain page as Markdown. If the user doesn't have the page ID handy, `ntn api v1/search -d '{"query":"Second Brain","filter":{"property":"object","value":"page"}}'` finds it.
 
 ## 2. Check whether the schema is already provisioned — ask Notion, not local state
@@ -48,7 +62,7 @@ Full detail (install table per OS, why the token is reusable, the command-to-MCP
 Do this right after step 1 connects, before installing Terraform or asking for provisioning credentials.
 
 **Search Notion for the schema itself:**
-- MCP: call `notion-search` for `"Second Brain"` (type: page). If found, `notion-fetch` it and check its child databases against the 11 names in [`data-model.md`](../data-model.md): Workplace, Project, Repo, Work Item, Research Question, Experiment, Note, Decision, Source, Person, Topic.
+- MCP: call `notion-search` for `"Second Brain"` (type: page). If found, `notion-fetch` it and check its child databases against the 11 titles Terraform gives them ([`terraform/databases.tf`](../terraform/databases.tf) — plural, unlike the entity names in [`data-model.md`](../data-model.md)): Workplaces, Projects, Repos, Work Items, Research Questions, Experiments, Notes, Decisions, Sources, People, Topics.
 - CLI: `ntn api v1/search -d '{"query":"Second Brain","filter":{"property":"object","value":"page"}}'`. If found, `ntn pages get <id>` and check for the same 11 names among its children.
 
 Then:
@@ -77,7 +91,7 @@ Verify: `terraform -version` should report >= 1.5.
 
 Skip entirely if step 2 already found the schema provisioned, or if the user only wants Terraform installed or Notion connected.
 
-**Architectural constraint**: don't ask the user to export credentials in a terminal they opened themselves, and don't try to export them yourself across separate tool calls. Have the user run this block themselves in one continuous terminal session:
+**Architectural constraint**: the agent can't set variables in the user's terminal, and its own `export`s don't carry over between separate tool calls — so don't try to export these yourself. Have the user run this block themselves, in one continuous session of their own terminal:
 
 ```shell
 # bash / Git Bash

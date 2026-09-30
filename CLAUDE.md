@@ -4,13 +4,8 @@
 
 ## Atlassian tools and ticket workflow
 
-Load these only when explicitly requested or when the ticket workflow is active:
-
-@harnessing/atlassian/jira.md
-@harnessing/atlassian/confluence.md
-@harnessing/atlassian/rovo.md
-@harnessing/workflows/generic-ticket-workflow.md
+Deliberately not imported here — they load on demand through the project skills in `.claude/skills/` (`jira-cli`, `confluence-cli`, `rovo-dev`, `generic-ticket-workflow`), whose canonical content lives in `harnessing/atlassian/` and `harnessing/workflows/`.
 
 ## Global setup
 
-To make harnessing/ available in any repo (not just second-brain), see @harnessing/global-setup.md
+To make harnessing/ available in any repo (not just second-brain), see `harnessing/global-setup.md`.

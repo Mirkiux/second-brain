@@ -1,4 +1,4 @@
-# rovoDev — Agent Instructions
+# rovo-dev — Agent Instructions
 
 This is the canonical reference for how an agent installs, authenticates, and uses the Atlassian Rovo Dev CLI (`acli rovodev`). It is tool-agnostic — the same instructions apply whether loaded via a Kiro skill, a Claude Code reference, or any other mechanism.
 
@@ -8,7 +8,7 @@ Workplace-specific values (username, API token env var name) are NOT embedded he
 
 Load this skill only when:
 - The user explicitly asks to start a Rovo Dev session
-- The ticket-workflow is active and Path A (rovoDev available) is selected at Step 1
+- The ticket-workflow is active and Path A (rovo-dev available) is selected at Step 1
 
 Do not auto-activate for general coding or file editing tasks.
 
@@ -16,14 +16,38 @@ Do not auto-activate for general coding or file editing tasks.
 
 ### Install
 
+Rovo Dev ships inside the Atlassian CLI (`acli`). Source of truth: [developer.atlassian.com/cloud/acli/guides](https://developer.atlassian.com/cloud/acli/guides/install-linux/).
+
+**macOS (Homebrew)**
 ```bash
 brew tap atlassian/acli
 brew trust atlassian/acli
 brew install acli
 ```
-
 If the tap returns a 404, verify you are using `atlassian/acli` (not `atlassian-labs/tap/acli`).
 If Homebrew flags the tap as untrusted, run `brew trust atlassian/acli` before installing.
+
+**Linux / WSL — Debian/Ubuntu (apt)**
+```bash
+sudo apt-get install -y wget gnupg2
+sudo mkdir -p -m 755 /etc/apt/keyrings
+wget -nv -O- https://acli.atlassian.com/gpg/public-key.asc | sudo gpg --dearmor -o /etc/apt/keyrings/acli-archive-keyring.gpg
+sudo chmod go+r /etc/apt/keyrings/acli-archive-keyring.gpg
+echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/acli-archive-keyring.gpg] https://acli.atlassian.com/linux/deb stable main" | sudo tee /etc/apt/sources.list.d/acli.list > /dev/null
+sudo apt update && sudo apt install -y acli
+```
+
+**Linux — no root** (swap `amd64` for `arm64` on ARM)
+```bash
+curl -LO "https://acli.atlassian.com/linux/latest/acli_linux_amd64/acli"
+chmod +x ./acli && mkdir -p ~/.local/bin && mv ./acli ~/.local/bin/acli
+```
+
+**Windows (PowerShell)** — download, then move `acli.exe` to a directory on `PATH`
+```powershell
+Invoke-WebRequest -Uri https://acli.atlassian.com/windows/latest/acli_windows_amd64/acli.exe -OutFile acli.exe
+.\acli.exe --help
+```
 
 ### Authenticate
 
@@ -47,9 +71,9 @@ acli rovodev --version 2>/dev/null && echo "INSTALLED" || echo "NOT_INSTALLED"
 acli rovodev doctor 2>&1 | grep -qE "binary : not found|consent\.json : not found" && echo "UNAVAILABLE" || echo "AVAILABLE"
 ```
 
-- `NOT_INSTALLED` → rovoDev cannot be used; fall back to jiraCli
-- `UNAVAILABLE` → binary present but service disabled for this org; fall back to jiraCli
-- `AVAILABLE` → proceed with rovoDev
+- `NOT_INSTALLED` → rovo-dev cannot be used; fall back to jira-cli
+- `UNAVAILABLE` → binary present but service disabled for this org; fall back to jira-cli
+- `AVAILABLE` → proceed with rovo-dev
 
 ## Workflows
 
