@@ -1,4 +1,4 @@
-# jiraCli — Agent Instructions
+# jira-cli — Agent Instructions
 
 This is the canonical reference for how an agent uses the Jira CLI (`jira`). It is tool-agnostic — the same instructions apply whether loaded via a Kiro skill, a Claude Code `CLAUDE.md` reference, a Cursor rule, or any other mechanism.
 
@@ -6,9 +6,10 @@ Workplace-specific values (base URL, project keys, username, credential env var 
 
 ## Installation & Auth
 
-- CLI: `jira` (go-jira or ankitpokhrel/jira-cli — verify with `jira version`)
-- Auth: API token via environment variable. The variable name is workplace-specific — read it from the Workplace entry in Notion.
-- Config file: `~/.config/.jira/.config.yml`
+- CLI: `jira` from [ankitpokhrel/jira-cli](https://github.com/ankitpokhrel/jira-cli) — every command below uses its syntax (the older go-jira CLI is **not** compatible). Verify with `jira version`.
+- Install: macOS `brew install ankitpokhrel/jira-cli/jira-cli`; Linux/WSL/Windows: download the binary for your platform from the project's GitHub releases and put it on `PATH` (or `go install github.com/ankitpokhrel/jira-cli/cmd/jira@latest` if Go is available).
+- Auth: jira-cli reads the API token from `JIRA_API_TOKEN`. The Workplace entry in Notion says where the workplace's token comes from; map it into `JIRA_API_TOKEN` (persisted the same way as `NOTION_API_TOKEN` in `harnessing/setup.md`, so the agent's shell can see it).
+- First run: `jira init` (interactive — the user runs it themselves) writes the config file `~/.config/.jira/.config.yml` with the base URL, login and default project.
 
 ## Activation
 

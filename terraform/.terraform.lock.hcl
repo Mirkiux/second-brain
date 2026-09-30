@@ -5,6 +5,7 @@ provider "registry.terraform.io/delize/notion" {
   version     = "0.9.0"
   constraints = "~> 0.9"
   hashes = [
+    "h1:QiEBn7vSRVFLd1jhmD12PngC8Bz8FXzEAG9DQesb7gA=",
     "h1:mfPd7YSpI8nh4WluaSa/J6rV0Lok5WKc5M9C9O7mq+o=",
     "zh:279f0d90b2fb032e6c1f045bbd68b9cfbe70f3dc956fe8d214b4b4175f286764",
     "zh:5ad1192708b1e83f8e76bc69f5d3c9d694af6e4c4a70cdf756a72d72c5ad3922",

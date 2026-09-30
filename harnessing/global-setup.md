@@ -4,11 +4,10 @@ By default, AI tools only load instructions from the repo they are opened in. Th
 
 This file documents how to wire `harnessing/` globally for each AI tool so it is always available regardless of working directory. The approach: create a symlink from `~/.kiro/harnessing` into `second-brain/harnessing/`, then register user-level config files that reference via the symlink. A `git pull` on `second-brain` updates the canonical files and all tools pick them up immediately — no changes needed to any work repo.
 
-**Prerequisite:** `second-brain` must be cloned locally. All paths below assume:
+**Prerequisite:** `second-brain` must be cloned locally. Point `SB_DIR` at wherever you cloned it, in the same shell you run the commands below from:
+```bash
+export SB_DIR=~/path/to/second-brain   # e.g. ~/proyectos/personal/second-brain
 ```
-~/Proyectos/other/second-brain/
-```
-Adjust if you clone it elsewhere.
 
 ---
 
@@ -17,7 +16,7 @@ Adjust if you clone it elsewhere.
 Kiro's file access is sandboxed to the current workspace and `~/.kiro/`. Absolute paths outside the workspace don't work. The solution is a symlink:
 
 ```bash
-ln -s ~/Proyectos/other/second-brain/harnessing ~/.kiro/harnessing
+ln -s $SB_DIR/harnessing ~/.kiro/harnessing
 ```
 
 Verify:
@@ -101,6 +100,13 @@ EOF
 
 If `~/.claude/CLAUDE.md` does not exist yet: `touch ~/.claude/CLAUDE.md`
 
+**Skills too:** the repo's `.claude/skills/` are project skills — Claude Code only sees them when the working directory is `second-brain/`. To make them available in every repo, symlink them into the user-level skills directory (each skill tells the agent to resolve its real path first, so it still finds `harnessing/` through the symlink):
+
+```bash
+mkdir -p ~/.claude/skills
+for d in "$SB_DIR"/.claude/skills/*/; do ln -sfn "$d" ~/.claude/skills/"$(basename "$d")"; done
+```
+
 **Note:** Claude Code's `@` syntax eagerly includes files. For on-demand skills, use plain text references rather than `@` so they don't load on every session.
 
 ---
@@ -163,7 +169,7 @@ EOF
 All global config files reference via `~/.kiro/harnessing/` which is a symlink to `second-brain/harnessing/`. To get the latest instructions in any tool:
 
 ```bash
-cd ~/Proyectos/other/second-brain
+cd $SB_DIR
 git pull
 ```
 
@@ -174,8 +180,8 @@ No changes to global config files are needed after the initial setup.
 ## New machine setup
 
 On a new machine:
-1. Clone `second-brain`: `git clone https://github.com/Mirkiux/second-brain.git ~/Proyectos/other/second-brain`
-2. Create the symlink: `ln -s ~/Proyectos/other/second-brain/harnessing ~/.kiro/harnessing`
+1. Clone `second-brain` and set `SB_DIR` to its path (see Prerequisite)
+2. Create the symlink: `ln -s $SB_DIR/harnessing ~/.kiro/harnessing`
 3. Run the shell commands in Steps 2–4 above for each tool you use
 4. Set `NOTION_API_TOKEN` (see `harnessing/cli/README.md`)
 
