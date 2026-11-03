@@ -17,6 +17,15 @@ Once step 4 ships, talk to that API instead of Notion directly — through eithe
 
 Read [`data-model.md`](../data-model.md) before writing anything. The short version: eleven databases in three layers (structural spine, knowledge entities, cross-cutting), held together by four patterns — self-relations for lineage, Status for lifecycle, optional most-specific scope, Topic tags for retrieval. Every rule below is one of those four patterns applied to a specific situation.
 
+## Session lifecycle: retrieve at start, store before closing
+
+Every working session (a chat, a project thread, a ticket run) touches the knowledge base twice:
+
+1. **At the start, retrieve.** Before planning, run `sb-search` (see rule 1 below) on the task's distinctive words: the repo, the service, the ticket number, the error. Read the hits that look relevant, including `Gotcha`s and `Preference`s from other projects, and act on them. Don't re-ask the user what the KB already answers.
+2. **Before closing, store.** Write what this session learned that a future session would otherwise rediscover: gotchas, facts verified against a real system, the user's corrections and preferences, decisions (proposed, per the last section), and dead ends. Follow the rules below, run `sb-search --refresh` first so you dedup against what you wrote earlier in the session. A session that learned nothing new says so and stores nothing.
+
+This is the loop the whole project exists for; skipping either half turns the KB back into a write-only archive.
+
 ## Before writing anything
 
 1. **Search first.** Check for existing entries on the same subject before creating a new one. This project's whole premise is that knowledge accumulates instead of being re-derived — skipping the search defeats it.
