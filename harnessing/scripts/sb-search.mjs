@@ -100,6 +100,7 @@ function extractPage(page, dbName, topicNames) {
   const selects = {};
   let urlProp = '';
   const topicIds = [];
+  const supersedes = [];
 
   for (const [key, v] of Object.entries(props)) {
     switch (v.type) {
@@ -117,6 +118,7 @@ function extractPage(page, dbName, topicNames) {
       case 'url': if (v.url) urlProp = v.url; break;
       case 'relation':
         if (/topic/i.test(key)) topicIds.push(...v.relation.map((r) => r.id));
+        if (/^supersedes$/i.test(key)) supersedes.push(...v.relation.map((r) => r.id));
         break;
       default: break;
     }
@@ -135,6 +137,7 @@ function extractPage(page, dbName, topicNames) {
     reusability: selects.Reusability || '',
     provenance: selects.Provenance || '',
     selects,
+    supersedes,
     url: urlProp || page.url || '',
     created: page.created_time || '',
     edited: page.last_edited_time || '',
@@ -169,6 +172,18 @@ function buildCache() {
     const pages = queryAll(dsId);
     for (const p of pages) rows.push(extractPage(p, name, topicNames));
     process.stderr.write(`  ${name}: ${pages.length}\n`);
+  }
+
+  // Notes have no Status property, so a superseded Note is only marked by the
+  // newer entry's Supersedes relation. Flag every target of one as Superseded
+  // so ranking down-weights it like a Superseded Decision.
+  const supersededBy = new Map();
+  for (const r of rows) for (const id of r.supersedes) supersededBy.set(id, r.title);
+  for (const r of rows) {
+    if (supersededBy.has(r.id)) {
+      r.status = 'Superseded';
+      r.text += `\nSuperseded by: ${supersededBy.get(r.id)}`;
+    }
   }
 
   const cache = { fetchedAt: new Date().toISOString(), count: rows.length, rows };
