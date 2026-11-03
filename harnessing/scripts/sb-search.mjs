@@ -175,14 +175,22 @@ function buildCache() {
   }
 
   // Notes have no Status property, so a superseded Note is only marked by the
-  // newer entry's Supersedes relation. Flag every target of one as Superseded
-  // so ranking down-weights it like a Superseded Decision.
+  // Supersedes relation. Notion keeps a same-database relation in sync on both
+  // pages, so the relation has no direction: of each linked pair, treat the
+  // older page as the superseded one, and down-weight it like a Superseded
+  // Decision.
+  const byId = new Map(rows.map((r) => [r.id, r]));
   const supersededBy = new Map();
-  for (const r of rows) for (const id of r.supersedes) supersededBy.set(id, r.title);
+  for (const r of rows) {
+    for (const id of r.supersedes) {
+      const other = byId.get(id);
+      if (other && other.created < r.created) supersededBy.set(id, r.title);
+    }
+  }
   for (const r of rows) {
     if (supersededBy.has(r.id)) {
       r.status = 'Superseded';
-      r.text += `\nSuperseded by: ${supersededBy.get(r.id)}`;
+      r.supersededBy = supersededBy.get(r.id);
     }
   }
 
@@ -338,6 +346,7 @@ function main() {
     console.log(`[${score}] ${r.type.replace(/s$/, '')}: ${r.title}`);
     if (meta) console.log(`      ${meta}`);
     if (r.topics.length) console.log(`      topics: ${r.topics.join(', ')}`);
+    if (r.supersededBy) console.log(`      superseded by: ${r.supersededBy}`);
     const sn = snippet(r, terms);
     if (sn) console.log(`      ${sn}`);
     console.log(`      ${r.id}${r.url ? '  ' + r.url : ''}`);
